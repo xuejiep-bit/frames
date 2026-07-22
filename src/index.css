@@ -353,6 +353,146 @@ textarea.input {
   font-weight: 500;
 }
 
+/* ── 复习页 ── */
+.review-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+}
+
+.review-progress {
+  font-size: 14px;
+  color: #8a8f99;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-card {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid #eceef2;
+  border-radius: 18px;
+  padding: 32px 20px 40px;
+  margin-bottom: 16px;
+  min-height: 300px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.review-front {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  word-break: break-word;
+}
+
+.review-back {
+  text-align: center;
+  border-top: 1px dashed #d6d9df;
+  padding-top: 18px;
+  width: 100%;
+}
+
+.review-back-text {
+  font-size: 22px;
+  color: #1a1a2e;
+  white-space: pre-wrap;
+}
+
+.review-example {
+  margin-top: 12px;
+  font-size: 15px;
+  color: #5a5f6a;
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.review-tap-hint {
+  font-size: 14px;
+  color: #a0a4ad;
+}
+
+.review-deck-tag {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 12px;
+  color: #a0a4ad;
+  background: #f5f6f8;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.show-answer-btn {
+  margin-top: 0;
+}
+
+.rate-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.rate-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 14px 4px;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.rate-btn:disabled {
+  opacity: 0.5;
+}
+
+.rate-label {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rate-hint {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.rate-again { background: #e5484d; }
+.rate-hard { background: #f0883e; }
+.rate-good { background: #4f6ef7; }
+.rate-easy { background: #18a058; }
+
+.review-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.review-done-icon {
+  font-size: 56px;
+}
+
+.review-done h2 {
+  font-size: 20px;
+}
+
+.review-done .btn {
+  max-width: 240px;
+}
+
 /* ── 设置页 ── */
 .settings-section {
   margin-bottom: 28px;
