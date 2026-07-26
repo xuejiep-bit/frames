@@ -3,7 +3,7 @@ import { json, badRequest, today, nowISO } from './_utils.js';
 // POST /api/import  批量导入
 // 请求体:[{front, back, example?, deck?}, ...]
 // D1 的 batch() 在单个隐式事务中执行,要么全部成功要么全部回滚
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, data }) {
   let body;
   try {
     body = await request.json();
@@ -20,8 +20,8 @@ export async function onRequestPost({ request, env }) {
   const now = nowISO();
   const due = today();
   const stmt = env.DB.prepare(
-    `INSERT INTO cards (id, front, back, example, deck, due_date, interval, ease_factor, repetitions, lapses, created_at, updated_at, deleted)
-     VALUES (?, ?, ?, ?, ?, ?, 0, 2.5, 0, 0, ?, ?, 0)`
+    `INSERT INTO cards (id, user_id, front, back, example, deck, due_date, interval, ease_factor, repetitions, lapses, created_at, updated_at, deleted)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 0, 2.5, 0, 0, ?, ?, 0)`
   );
 
   const statements = [];
@@ -34,7 +34,7 @@ export async function onRequestPost({ request, env }) {
     const example = item.example ? String(item.example).trim() : null;
     const deck = item.deck ? String(item.deck).trim() : 'default';
     statements.push(
-      stmt.bind(crypto.randomUUID(), front, back, example, deck, due, now, now)
+      stmt.bind(crypto.randomUUID(), data.user.id, front, back, example, deck, due, now, now)
     );
   }
 

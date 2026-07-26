@@ -1,15 +1,15 @@
 import { json, badRequest, today, nowISO } from './_utils.js';
 
-// GET /api/cards           全部未删除卡片
+// GET /api/cards           当前用户全部未删除卡片
 // GET /api/cards?deck=xxx  按牌组筛选
 // GET /api/cards?due=today 今日到期(due_date <= 今天)
-export async function onRequestGet({ request, env }) {
+export async function onRequestGet({ request, env, data }) {
   const url = new URL(request.url);
   const deck = url.searchParams.get('deck');
   const due = url.searchParams.get('due');
 
-  let sql = 'SELECT * FROM cards WHERE deleted = 0';
-  const params = [];
+  let sql = 'SELECT * FROM cards WHERE user_id = ? AND deleted = 0';
+  const params = [data.user.id];
   if (deck) {
     sql += ' AND deck = ?';
     params.push(deck);
@@ -25,7 +25,7 @@ export async function onRequestGet({ request, env }) {
 }
 
 // POST /api/cards  新建卡片 {front, back, example?, deck?}
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, data }) {
   let body;
   try {
     body = await request.json();
@@ -38,6 +38,7 @@ export async function onRequestPost({ request, env }) {
   const now = nowISO();
   const card = {
     id: crypto.randomUUID(),
+    user_id: data.user.id,
     front: String(front).trim(),
     back: String(back).trim(),
     example: example ? String(example).trim() : null,
@@ -53,10 +54,10 @@ export async function onRequestPost({ request, env }) {
   };
 
   await env.DB.prepare(
-    `INSERT INTO cards (id, front, back, example, deck, due_date, interval, ease_factor, repetitions, lapses, created_at, updated_at, deleted)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO cards (id, user_id, front, back, example, deck, due_date, interval, ease_factor, repetitions, lapses, created_at, updated_at, deleted)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
-    card.id, card.front, card.back, card.example, card.deck, card.due_date,
+    card.id, card.user_id, card.front, card.back, card.example, card.deck, card.due_date,
     card.interval, card.ease_factor, card.repetitions, card.lapses,
     card.created_at, card.updated_at, card.deleted
   ).run();
@@ -65,7 +66,7 @@ export async function onRequestPost({ request, env }) {
 }
 
 // PUT /api/cards  更新卡片 {id, front?, back?, example?, deck?}
-export async function onRequestPut({ request, env }) {
+export async function onRequestPut({ request, env, data }) {
   let body;
   try {
     body = await request.json();
@@ -76,8 +77,8 @@ export async function onRequestPut({ request, env }) {
   if (!id) return badRequest('id is required');
 
   const existing = await env.DB.prepare(
-    'SELECT * FROM cards WHERE id = ? AND deleted = 0'
-  ).bind(id).first();
+    'SELECT * FROM cards WHERE id = ? AND user_id = ? AND deleted = 0'
+  ).bind(id, data.user.id).first();
   if (!existing) return json({ error: 'not found' }, 404);
 
   const updated = {
@@ -88,22 +89,23 @@ export async function onRequestPut({ request, env }) {
   };
   if (!updated.front || !updated.back) return badRequest('front and back cannot be empty');
 
+  const updated_at = nowISO();
   await env.DB.prepare(
-    'UPDATE cards SET front = ?, back = ?, example = ?, deck = ?, updated_at = ? WHERE id = ?'
-  ).bind(updated.front, updated.back, updated.example, updated.deck, nowISO(), id).run();
+    'UPDATE cards SET front = ?, back = ?, example = ?, deck = ?, updated_at = ? WHERE id = ? AND user_id = ?'
+  ).bind(updated.front, updated.back, updated.example, updated.deck, updated_at, id, data.user.id).run();
 
-  return json({ ...existing, ...updated, updated_at: nowISO() });
+  return json({ ...existing, ...updated, updated_at });
 }
 
 // DELETE /api/cards?id=xxx  软删除
-export async function onRequestDelete({ request, env }) {
+export async function onRequestDelete({ request, env, data }) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
   if (!id) return badRequest('id is required');
 
   const { meta } = await env.DB.prepare(
-    'UPDATE cards SET deleted = 1, updated_at = ? WHERE id = ? AND deleted = 0'
-  ).bind(nowISO(), id).run();
+    'UPDATE cards SET deleted = 1, updated_at = ? WHERE id = ? AND user_id = ? AND deleted = 0'
+  ).bind(nowISO(), id, data.user.id).run();
 
   if (!meta.changes) return json({ error: 'not found' }, 404);
   return json({ ok: true });
