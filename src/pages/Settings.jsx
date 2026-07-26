@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api, getToken, logout as doLogout } from '../api';
+import { api } from '../api';
 
-export default function Settings({ user, onLogout }) {
+export default function Settings() {
   const [cards, setCards] = useState(null);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState(null);
@@ -25,7 +25,7 @@ export default function Settings({ user, onLogout }) {
     setBusy('export');
     setMessage(null);
     try {
-      const res = await fetch('/api/export', { headers: { 'X-Auth': getToken() || '' } });
+      const res = await fetch('/api/export');
       if (!res.ok) throw new Error(`导出失败 (${res.status})`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -61,24 +61,11 @@ export default function Settings({ user, onLogout }) {
     }
   }
 
-  async function handleLogout() {
-    await doLogout();
-    onLogout();
-  }
-
   return (
     <div className="page">
       <header className="page-header">
         <h1>设置</h1>
       </header>
-
-      <section className="settings-section">
-        <h2>账户</h2>
-        <div className="account-row">
-          <span className="account-avatar">{user.username.slice(0, 1).toUpperCase()}</span>
-          <span className="deck-name">{user.username}</span>
-        </div>
-      </section>
 
       <section className="settings-section">
         <h2>备份</h2>
@@ -108,10 +95,6 @@ export default function Settings({ user, onLogout }) {
       {message && (
         <p className={message.type === 'ok' ? 'ok-text' : 'error-text'}>{message.text}</p>
       )}
-
-      <section className="settings-section">
-        <button className="btn btn-danger btn-big" onClick={handleLogout}>退出登录</button>
-      </section>
     </div>
   );
 }

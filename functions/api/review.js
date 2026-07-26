@@ -25,7 +25,7 @@ export function sm2(card, quality) {
 }
 
 // POST /api/review  {id, quality}  quality ∈ {0, 3, 4, 5}
-export async function onRequestPost({ request, env, data }) {
+export async function onRequestPost({ request, env }) {
   let body;
   try {
     body = await request.json();
@@ -37,8 +37,8 @@ export async function onRequestPost({ request, env, data }) {
   if (![0, 3, 4, 5].includes(quality)) return badRequest('quality must be 0, 3, 4 or 5');
 
   const card = await env.DB.prepare(
-    'SELECT * FROM cards WHERE id = ? AND user_id = ? AND deleted = 0'
-  ).bind(id, data.user.id).first();
+    'SELECT * FROM cards WHERE id = ? AND deleted = 0'
+  ).bind(id).first();
   if (!card) return json({ error: 'not found' }, 404);
 
   const next = sm2(card, quality);
@@ -46,10 +46,10 @@ export async function onRequestPost({ request, env, data }) {
 
   await env.DB.prepare(
     `UPDATE cards SET interval = ?, ease_factor = ?, repetitions = ?, lapses = ?, due_date = ?, updated_at = ?
-     WHERE id = ? AND user_id = ?`
+     WHERE id = ?`
   ).bind(
     next.interval, next.ease_factor, next.repetitions, next.lapses,
-    next.due_date, updated_at, id, data.user.id
+    next.due_date, updated_at, id
   ).run();
 
   return json({ ...card, ...next, updated_at });
