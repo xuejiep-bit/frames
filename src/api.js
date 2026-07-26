@@ -1,14 +1,15 @@
-// 密码只存 sessionStorage(仅作登录凭证,业务数据一律走 D1)
-const KEY = 'app_password';
+// 会话 token 存 localStorage:一次登录长期有效(180 天),关浏览器/重启手机都不用重输。
+// 业务数据一律走 D1,本地只放这个凭证。
+const KEY = 'auth_token';
 
-export function getPassword() {
-  return sessionStorage.getItem(KEY);
+export function getToken() {
+  return localStorage.getItem(KEY);
 }
-export function setPassword(pw) {
-  sessionStorage.setItem(KEY, pw);
+export function setToken(t) {
+  localStorage.setItem(KEY, t);
 }
-export function clearPassword() {
-  sessionStorage.removeItem(KEY);
+export function clearToken() {
+  localStorage.removeItem(KEY);
 }
 
 // 统一请求封装:自动带 X-Auth,401 时广播事件让 App 回到登录页
@@ -17,16 +18,57 @@ export async function api(path, { method = 'GET', body } = {}) {
     method,
     headers: {
       ...(body ? { 'Content-Type': 'application/json' } : {}),
-      'X-Auth': getPassword() || '',
+      'X-Auth': getToken() || '',
     },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (res.status === 401) {
-    clearPassword();
+    clearToken();
     window.dispatchEvent(new Event('auth-expired'));
-    throw new Error('密码已失效,请重新登录');
+    throw new Error('登录已过期,请重新登录');
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error((data && data.error) || `请求失败 (${res.status})`);
   return data;
+}
+
+// 登录 / 注册,成功后保存 token
+export async function authenticate(action, { username, password, code }) {
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, username, password, code }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error((data && data.error) || `出错了 (${res.status})`);
+  setToken(data.token);
+  return data.user;
+}
+
+// 用已存的 token 换当前用户;无效则返回 null
+export async function fetchMe() {
+  if (!getToken()) return null;
+  try {
+    const res = await fetch('/api/auth', { headers: { 'X-Auth': getToken() } });
+    if (!res.ok) {
+      clearToken();
+      return null;
+    }
+    const data = await res.json();
+    return data.user;
+  } catch {
+    return null;
+  }
+}
+
+export async function logout() {
+  const token = getToken();
+  if (token) {
+    await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Auth': token },
+      body: JSON.stringify({ action: 'logout' }),
+    }).catch(() => {});
+  }
+  clearToken();
 }

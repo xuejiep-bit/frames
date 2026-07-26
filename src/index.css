@@ -184,6 +184,38 @@ textarea.input {
   gap: 4px;
 }
 
+.link-btn {
+  border: none;
+  background: none;
+  color: #4f6ef7;
+  font-size: 15px;
+  padding: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #eceef2;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.account-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #4f6ef7;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ── 卡片列表 ── */
 .search-input {
   margin-bottom: 10px;
